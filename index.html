@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yosef — Gestion financière</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bleu-royal: #1E3A63;
+  --bleu-royal-dark: #16294A;
+  --vert-oasis: #1F9D6B;
+  --vert-oasis-soft: #E3F3EA;
+  --or-joseph: #C9962C;
+  --or-joseph-soft: #F7ECD6;
+  --sable: #F2E9D8;
+  --carte: #FFFDF8;
+  --encre: #1C1B18;
+  --encre-douce: #6B6558;
+  --alerte: #B23A2E;
+  --alerte-soft: #F7E6E3;
+  --ombre: 0 8px 24px rgba(28,27,24,0.06);
+  --ombre-hover: 0 12px 32px rgba(28,27,24,0.10);
+  --radius: 18px;
+}
+*{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
+body{
+  margin:0;
+  background: var(--sable);
+  color: var(--encre);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.app{ display:grid; grid-template-columns: 260px 1fr; min-height:100vh; }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  background: linear-gradient(180deg, var(--bleu-royal) 0%, var(--bleu-royal-dark) 100%);
+  color: #EDE7D9; padding: 28px 18px 20px; display:flex; flex-direction:column; gap: 4px;
+}
+.brand{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size: 20px; color:#fff;
+  display:flex; align-items:center; gap:10px; padding: 4px 10px 22px;
+}
+.brand .mark{
+  width:30px; height:30px; border-radius:8px;
+  background: linear-gradient(135deg, var(--or-joseph), #E8C976);
+  display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.label{
+  font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+  color: rgba(237,231,217,0.45); padding: 14px 12px 6px; font-weight:600;
+}
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding: 9px 12px; border-radius: 10px;
+  font-size: 14px; color: rgba(237,231,217,0.85); text-decoration:none; cursor:pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.nav-item:hover{ background: rgba(237,231,217,0.08); color:#fff; }
+.nav-item.active{
+  background: rgba(201,150,44,0.18); color: #F3D98B; font-weight:600;
+  box-shadow: inset 3px 0 0 var(--or-joseph);
+}
+.nav-item .ic{ width:18px; text-align:center; font-size:14px; }
+.sidebar-bottom{ margin-top:auto; border-top:1px solid rgba(237,231,217,0.12); padding-top:10px; }
+.as-button{ border:none; background:transparent; width:100%; font-family:'Inter', sans-serif; text-align:left; }
+
+/* ---------- MAIN ---------- */
+.main{ padding: 32px 40px 48px; max-width: 1180px; }
+.topbar{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 22px; }
+.topbar h1{ font-family:'Space Grotesk', sans-serif; font-size: 24px; font-weight:600; margin:0 0 4px; }
+.topbar p{ margin:0; color:var(--encre-douce); font-size:14px; }
+.today-pill{ background: var(--carte); border-radius: 100px; padding: 8px 16px; font-size: 13px; color: var(--encre-douce); box-shadow: var(--ombre); }
+
+/* ---------- HERO : LE GRENIER ---------- */
+.hero{
+  background: var(--bleu-royal); border-radius: 22px; padding: 30px 34px;
+  display:grid; grid-template-columns: 1fr 220px; align-items:center; gap: 28px;
+  color:#F3EEE0; box-shadow: var(--ombre); margin-bottom: 22px; position:relative; overflow:hidden;
+}
+.hero::after{ content:""; position:absolute; right:-60px; top:-60px; width:220px; height:220px; background: radial-gradient(circle, rgba(201,150,44,0.25), transparent 70%); }
+.hero-text .eyebrow{ font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color: var(--or-joseph); font-weight:600; margin-bottom:10px; }
+.hero-text h2{ font-family:'Space Grotesk', sans-serif; font-size: 23px; font-weight:600; margin: 0 0 10px; line-height:1.3; }
+.hero-text p{ margin:0 0 18px; font-size:14px; color:#C9C2AE; max-width:420px; line-height:1.6; }
+.hero-stat{ display:flex; gap: 28px; flex-wrap:wrap; }
+.hero-stat div b{ display:block; font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:600; color:#fff; }
+.hero-stat div span{ font-size:12px; color:#A9A28E; }
+.silo-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; z-index:1; }
+.silo-caption{ font-size:11px; color:#C9C2AE; text-align:center; }
+.silo-caption b{ color:var(--or-joseph); font-family:'IBM Plex Mono', monospace; font-size:15px; }
+
+/* ---------- KPI GRID ---------- */
+.kpi-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+.card{ background: var(--carte); border-radius: var(--radius); padding: 20px 20px 18px; box-shadow: var(--ombre); }
+.kpi .kpi-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.kpi .kpi-icon{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.kpi .kpi-label{ font-size:12.5px; color:var(--encre-douce); font-weight:500; display:flex; align-items:center; gap:5px; }
+.kpi .kpi-value{ font-family:'IBM Plex Mono', monospace; font-size: 21px; font-weight:600; margin: 2px 0 4px; }
+.kpi .kpi-delta{ font-size:12px; font-weight:600; color:var(--encre-douce); }
+.bg-vert{ background: var(--vert-oasis-soft); } .bg-or{ background: var(--or-joseph-soft); }
+.bg-alerte{ background: var(--alerte-soft); } .bg-bleu{ background: #E7ECF3; }
+
+/* ---------- CONTENT GRID ---------- */
+.content-grid{ display:grid; grid-template-columns: 1.6fr 1fr; gap: 18px; margin-bottom: 18px; }
+.panel-title{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; }
+.panel-title h3{ font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:600; margin:0; }
+
+/* journal */
+.journal-row{ display:flex; justify-content:space-between; align-items:center; padding: 11px 0; border-bottom: 1px solid rgba(28,27,24,0.06); font-size: 13.5px; }
+.journal-row:last-child{ border-bottom:none; }
+.journal-left{ display:flex; align-items:center; gap:10px; }
+.journal-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.journal-amount{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+.journal-sub{ color: var(--encre-douce); font-size:12px; }
+
+.alert-banner{
+  display:flex; align-items:center; gap:12px; background: var(--alerte-soft);
+  border: 1px solid rgba(178,58,46,0.15); border-radius: 14px; padding: 14px 18px;
+  font-size:13.5px; color: #7A2A21; margin-bottom: 20px;
+}
+
+.objectif-label{ font-size:13px;color:var(--encre-douce);margin-bottom:8px; }
+.objectif-bar{ background:var(--sable);border-radius:100px;height:10px;overflow:hidden;margin-bottom:4px; }
+.objectif-fill{ height:100%; background:linear-gradient(90deg,var(--or-joseph),var(--vert-oasis)); }
+.objectif-value{ font-size:12px;color:var(--encre-douce);margin-bottom:18px; }
+
+/* ---------- BOUTONS ---------- */
+.btn{ border:none; border-radius:10px; padding: 10px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter', sans-serif; }
+.btn-primary{ background: var(--or-joseph); color: var(--bleu-royal-dark); }
+.btn-primary:hover{ background:#DBA83E; }
+.btn-secondary{ background: var(--sable); color: var(--encre); }
+.btn-secondary:hover{ background:#E9DCC2; }
+.btn-large{ padding: 14px 24px; font-size:14.5px; width:100%; }
+
+/* ---------- LISTE DE SAISIES (au lieu de tableaux) ---------- */
+.section-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; }
+.section-total{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+
+.entry-list{ display:flex; flex-direction:column; }
+.entry-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 14px 4px; border-bottom: 1px solid rgba(28,27,24,0.06); gap:12px;
+}
+.entry-row:last-child{ border-bottom:none; }
+.entry-main{ font-size:14px; font-weight:600; }
+.entry-sub{ font-size:12.5px; color:var(--encre-douce); margin-top:2px; }
+.entry-amount{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px; white-space:nowrap; }
+.entry-actions{ display:flex; gap:6px; }
+.icon-btn{ border:none; background:transparent; cursor:pointer; font-size:15px; color:var(--encre-douce); padding:4px; }
+.icon-btn:hover{ color:var(--bleu-royal); }
+.icon-btn.delete:hover{ color:var(--alerte); }
+.empty-state{ text-align:center; color:var(--encre-douce); padding: 40px 0; }
+
+/* ---------- INFO-BULLES ---------- */
+.help-icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:15px; height:15px; border-radius:50%; background: rgba(28,27,24,0.12);
+  color: var(--encre-douce); font-size:10px; font-weight:700; cursor:help; position:relative; flex-shrink:0;
+}
+.help-icon .help-tip{
+  display:none; position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+  background: var(--bleu-royal-dark); color:#EDE7D9; font-size:12px; font-weight:400;
+  padding:8px 12px; border-radius:8px; width:220px; line-height:1.4; z-index:20; box-shadow: var(--ombre-hover);
+}
+.help-icon:hover .help-tip, .help-icon.open .help-tip{ display:block; }
+
+/* ---------- OVERLAY GÉNÉRIQUE ---------- */
+.overlay{
+  position:fixed; inset:0; background: rgba(28,27,24,0.55);
+  display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;
+}
+
+/* ---------- ONBOARDING ---------- */
+.onboard-card{
+  background: var(--carte); border-radius: 22px; padding: 36px 40px; max-width:560px; width:100%;
+  box-shadow: var(--ombre-hover); text-align:center;
+}
+.onboard-mark{ font-size:34px; margin-bottom:8px; }
+.onboard-card h2{ font-family:'Space Grotesk', sans-serif; font-size:24px; margin:0 0 10px; }
+.onboard-lead{ font-size:14px; color:var(--encre-douce); line-height:1.6; margin:0 0 20px; }
+.onboard-cycle{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:20px; }
+.onboard-step{
+  background: var(--sable-light, var(--sable)); border-radius:12px; padding:12px 8px; font-size:12.5px; font-weight:600;
+}
+.onboard-step b{ display:block; color:var(--or-joseph); font-size:16px; margin-bottom:2px; }
+.onboard-step span{ display:block; font-weight:400; color:var(--encre-douce); font-size:11.5px; margin-top:2px; }
+
+/* ---------- MODALE FORMULAIRE ---------- */
+.modal-card{
+  background: var(--carte); border-radius: 20px; padding: 28px 30px; max-width:480px; width:100%;
+  box-shadow: var(--ombre-hover); max-height:88vh; overflow-y:auto;
+}
+.modal-card h2{ font-family:'Space Grotesk', sans-serif; font-size:19px; margin:0 0 18px; }
+.field-group{ margin-bottom:16px; }
+.field-group label{ display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; margin-bottom:6px; }
+.field-group input, .field-group select, .field-group textarea{
+  width:100%; border:1px solid rgba(28,27,24,0.15); border-radius:10px; padding:10px 12px;
+  font-family:'Inter', sans-serif; font-size:14px; color:var(--encre); background:#fff;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus{ outline:2px solid var(--or-joseph); border-color:transparent; }
+.field-help{ font-size:12px; color:var(--encre-douce); margin-top:4px; }
+.modal-actions{ display:flex; gap:10px; margin-top:22px; }
+.modal-actions .btn{ flex:1; }
+
+/* ---------- TOAST ---------- */
+.toast{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
+  background: var(--bleu-royal-dark); color:#fff; padding:12px 22px; border-radius: 100px;
+  font-size:13.5px; font-weight:600; box-shadow: var(--ombre-hover); z-index:200;
+}
+
+/* ---------- BULLE YOSEF ---------- */
+.yosef-bubble{
+  position:fixed; bottom:24px; right:24px; max-width:300px;
+  background: var(--bleu-royal); color:#F3EEE0; border-radius:16px; padding:16px 18px;
+  box-shadow: var(--ombre-hover); z-index:90; border-left:3px solid var(--or-joseph);
+}
+.yosef-bubble .yb-title{ font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px; margin-bottom:6px; color:#F3D98B; }
+.yosef-bubble .yb-text{ font-size:13px; line-height:1.5; color:#DCD5C3; }
+.yosef-bubble .yb-close{ position:absolute; top:8px; right:10px; background:none; border:none; color:#A9A28E; cursor:pointer; font-size:13px; }
+
+.note{ margin-top:18px; font-size:12.5px; color: var(--encre-douce); text-align:center; }
+
+/* ---------- AJOUTS v2 : stock, introductions, badges ---------- */
+.section-intro{ color: var(--encre-douce); font-size:13.5px; line-height:1.55; max-width:680px; margin:-8px 0 20px; }
+.entry-badge{ display:inline-block; margin-left:8px; padding:2px 9px; border-radius:100px; font-size:11px; font-weight:600; background: var(--alerte-soft); color:#7A2A21; vertical-align:middle; }
+.kpi-grid + .kpi-grid{ margin-top:-6px; }
+.stock-line{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(28,27,24,0.06); font-size:13.5px; }
+.stock-line:last-child{ border-bottom:none; }
+.stock-line span:last-child{ font-family:'IBM Plex Mono', monospace; font-weight:600; color:var(--alerte); }
+.alert-banner + .alert-banner{ margin-top:-8px; }
+
+.as-button[hidden]{ display:none; }
+.file-status{ font-size:11.5px; line-height:1.45; color:rgba(237,231,217,0.6); padding:2px 12px 8px; }
+
+.company-box{ background:rgba(255,255,255,0.07); border-radius:12px; padding:10px 10px 8px; margin:0 0 14px; }
+.company-label{ font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(237,231,217,0.5); font-weight:600; margin-bottom:6px; }
+.company-box select{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:var(--bleu-royal-dark); color:#fff; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; }
+.company-actions{ display:flex; gap:6px; margin-top:8px; }
+.company-actions button{ flex:1; border:none; border-radius:8px; padding:6px 4px; font-size:11.5px; font-weight:600; cursor:pointer; background:rgba(255,255,255,0.1); color:#EDE7D9; font-family:'Inter',sans-serif; }
+.company-actions button:hover{ background:rgba(255,255,255,0.18); }
+.company-actions .danger:hover{ background:rgba(178,58,46,0.55); }
+.company-tag{ display:inline-block; background:var(--or-joseph-soft); color:#7A5A12; font-size:12px; font-weight:600; padding:4px 12px; border-radius:100px; margin-bottom:8px; }
+.rep-controls{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.rep-presets{ display:flex; flex-wrap:wrap; gap:8px; }
+.rep-presets button{ border:none; border-radius:100px; padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer; background:var(--sable); color:var(--encre); font-family:'Inter',sans-serif; }
+.rep-presets button:hover{ background:#E9DCC2; }
+.rep-dates{ display:flex; gap:12px; align-items:center; font-size:13px; font-weight:600; }
+.rep-dates input{ border:1px solid rgba(28,27,24,0.15); border-radius:8px; padding:7px 10px; font-family:'Inter',sans-serif; font-size:13px; }
+.rep-card{ margin-bottom:16px; }
+.rep-table td.num, .rep-table th.num{ text-align:right; font-family:'IBM Plex Mono',monospace; white-space:nowrap; }
+.rep-table tfoot td{ font-weight:700; border-top:2px solid var(--sable); padding-top:12px; }
+.rep-note{ font-size:12.5px; color:var(--encre-douce); margin:0 0 14px; }
+@media print{
+  .sidebar, .yosef-bubble, .toast, .no-print, .overlay{ display:none !important; }
+  .app{ display:block; } .main{ padding:0; max-width:none; } body{ background:#fff; }
+  .card{ box-shadow:none; border:1px solid #ddd; break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">🌾</span> Yosef</div>
+
+    <div class="company-box">
+      <div class="company-label">Entreprise active</div>
+      <select id="companySelect"></select>
+      <div class="company-actions">
+        <button id="btnNewCompany">+ Nouvelle</button>
+        <button id="btnRenameCompany">Renommer</button>
+        <button id="btnDeleteCompany" class="danger">Supprimer</button>
+      </div>
+    </div>
+
+    <nav id="navItems">
+      <div class="nav-item" data-section="dashboard"><span class="ic">🏠</span> Tableau de bord</div>
+      <div class="nav-item" data-section="rapports"><span class="ic">📊</span> Rapports</div>
+
+      <div class="label">① Démarrer</div>
+      <div class="nav-item" data-section="capital"><span class="ic">💼</span> Capital &amp; investissements</div>
+
+      <div class="label">② Produire</div>
+      <div class="nav-item" data-section="articles"><span class="ic">📦</span> Stock &amp; articles</div>
+      <div class="nav-item" data-section="achats"><span class="ic">🧱</span> Achats &amp; dépenses</div>
+      <div class="nav-item" data-section="tiers"><span class="ic">👥</span> Fournisseurs &amp; prestataires</div>
+      <div class="nav-item" data-section="production"><span class="ic">🛠️</span> Production</div>
+      <div class="nav-item" data-section="ajustements"><span class="ic">📋</span> Inventaire &amp; pertes</div>
+
+      <div class="label">③ Vendre</div>
+      <div class="nav-item" data-section="ventes"><span class="ic">🛒</span> Ventes &amp; factures</div>
+
+      <div class="label">④ Encaisser</div>
+      <div class="nav-item" data-section="encaissements"><span class="ic">💰</span> Règlements clients</div>
+
+      <div class="label">⑤ Payer</div>
+      <div class="nav-item" data-section="paiements"><span class="ic">📤</span> Règlements fournisseurs</div>
+
+      <div class="label">⑥ Grandir</div>
+      <div class="nav-item" data-section="epargne"><span class="ic">🌱</span> Épargne &amp; objectifs</div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div id="fileGroup">
+        <div class="label">Mes données</div>
+        <button id="btnCreateFile" class="nav-item as-button"><span class="ic">📁</span> Créer mon fichier de données</button>
+        <button id="btnOpenFile" class="nav-item as-button"><span class="ic">📂</span> Ouvrir un fichier existant</button>
+        <button id="btnReconnect" class="nav-item as-button" hidden><span class="ic">🔗</span> <span id="reconnectLabel">Reconnecter mon fichier</span></button>
+        <div id="fileStatus" class="file-status"></div>
+      </div>
+      <button id="btnExport" class="nav-item as-button"><span class="ic">⬇</span> Exporter la sauvegarde</button>
+      <label class="nav-item as-button" for="importFile"><span class="ic">⬆</span> Importer une sauvegarde</label>
+      <input type="file" id="importFile" accept=".json" hidden>
+      <div class="nav-item as-button" id="btnReplay"><span class="ic">💡</span> Revoir l'accueil</div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" id="main"></main>
+</div>
+
+<!-- ============ ÉCRAN D'ACCUEIL ============ -->
+<div id="onboarding" class="overlay" hidden>
+  <div class="onboard-card">
+    <div class="onboard-mark">🌾</div>
+    <h2>Bienvenue dans Yosef</h2>
+    <p class="onboard-lead">Yosef vous aide à suivre l'argent de votre entreprise, sans jargon ni formation comptable.</p>
+
+    <div class="onboard-cycle">
+      <div class="onboard-step"><b>①</b> Démarrer<span>Votre capital de départ</span></div>
+      <div class="onboard-step"><b>②</b> Produire<span>Achats, stock &amp; production</span></div>
+      <div class="onboard-step"><b>③</b> Vendre<span>Ce que vous vendez</span></div>
+      <div class="onboard-step"><b>④</b> Encaisser<span>L'argent que vous recevez</span></div>
+      <div class="onboard-step"><b>⑤</b> Payer<span>L'argent que vous versez</span></div>
+      <div class="onboard-step"><b>⑥</b> Grandir<span>Votre épargne &amp; vos objectifs</span></div>
+    </div>
+
+    <p class="onboard-lead">
+      🌾 Comme Joseph, chaque franc mis de côté aujourd'hui protège votre entreprise demain.
+      C'est le sens du <b>grenier</b> que vous verrez sur votre tableau de bord.
+    </p>
+
+    <button id="btnStart" class="btn btn-primary btn-large">Commencer par mon capital de départ</button>
+  </div>
+</div>
+
+<!-- ============ FORMULAIRE (MODALE) ============ -->
+<div id="modalOverlay" class="overlay" hidden>
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<!-- ============ NOTIFICATION (TOAST) ============ -->
+<div id="toast" class="toast" hidden></div>
+
+<!-- ============ BULLE YOSEF ============ -->
+<div id="yosefBubble" class="yosef-bubble" hidden></div>
+
+<script>
+// ---------------------------------------------------------
+// Yosef — Outil de gestion financière (cycle 360°)
+// Toutes les données sont stockées localement (localStorage),
+// aucune donnée n'est envoyée à un serveur.
+// ---------------------------------------------------------
+
+const STORAGE_KEY = "yosef-finances-v1"; // ancienne clé (sert à la migration)
+const REG_KEY = "yosef-entreprises-v1";
+const dataKey = id => "yosef-data-" + id;
+const ONBOARD_KEY = "yosef-onboarded-v1";
+const STOCKABLE = ["Matière première", "Marchandise", "Produit fabriqué"];
+const MODES = ["Espèces", "Mobile Money", "Virement", "Chèque"];
+
+// Types de champs : text, textarea, number, date, select, article (liste d'articles du stock)
+// Options utiles : question (formulation du formulaire), help (info-bulle), required,
+// allowNegative, default, suggest ("tiers" | "clients"), types/blank (pour "article")
+const SECTIONS = [
+  {
+    id: "capital", title: "Capital & investissements", icon: "💼",
+    intro: "L'argent et les biens que vous mettez dans l'entreprise au départ, puis chaque fois que vous investissez à nouveau.",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "description", label: "Description", question: "De quoi s'agit-il ?", type: "text", placeholder: "Ex : Capital personnel investi" },
+      { field: "type", label: "Type", question: "Quel type ?", type: "select", options: ["Capital initial", "Investissement", "Stock initial"],
+        help: "Capital initial = argent mis au départ. Investissement = argent ajouté plus tard. Stock initial = valeur des marchandises de départ (ce n'est pas de l'argent disponible ; pour le détail, utilisez « Stock & articles »)." },
+      { field: "montant", label: "Montant", question: "Quel montant ?", type: "number" }
+    ]
+  },
+  {
+    id: "articles", title: "Stock & articles", icon: "📦",
+    intro: "La liste de tout ce que vous achetez, fabriquez ou vendez. La quantité en stock se calcule toute seule à partir de vos achats, productions, ventes et inventaires.",
+    columns: [
+      { field: "nom", label: "Nom", question: "Comment s'appelle cet article ?", type: "text", required: true, placeholder: "Ex : Tissu wax, Robe, Coupe de cheveux" },
+      { field: "type", label: "Type", question: "De quel type ?", type: "select", options: ["Matière première", "Marchandise", "Produit fabriqué", "Service"],
+        help: "Matière première = ce que vous utilisez pour fabriquer. Marchandise = ce que vous achetez pour revendre tel quel. Produit fabriqué = ce que vous fabriquez. Service = ce que vous faites sans stock (coiffure, réparation...)." },
+      { field: "unite", label: "Unité", question: "En quelle unité le comptez-vous ?", type: "text", placeholder: "kg, pièce, mètre, litre..." },
+      { field: "quantiteInitiale", label: "Quantité de départ", question: "Combien en avez-vous déjà aujourd'hui ?", type: "number", default: 0,
+        help: "Laissez 0 si vous démarrez sans stock, et pour un service." },
+      { field: "seuil", label: "Seuil d'alerte", question: "À partir de quelle quantité voulez-vous être alerté ?", type: "number", default: 0,
+        help: "Quand le stock descend à ce niveau ou en dessous, Yosef vous prévient. Laissez 0 pour ne pas être alerté." },
+      { field: "coutUnitaire", label: "Coût unitaire", question: "Combien coûte une unité ? (optionnel)", type: "number",
+        help: "Prix d'achat ou de revient d'une unité. Il se met à jour tout seul à chaque achat enregistré avec cet article." },
+      { field: "prixVente", label: "Prix de vente", question: "À quel prix la vendez-vous ? (optionnel)", type: "number",
+        help: "Sert à remplir le montant automatiquement quand vous enregistrez une vente." }
+    ]
+  },
+  {
+    id: "achats", title: "Achats & dépenses", icon: "🧱",
+    intro: "Tout ce que vous payez pour votre activité : matières, marchandises, prestataires, loyer, transport... Si l'achat alimente votre stock, choisissez l'article et la quantité.",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "description", label: "Description", question: "Qu'avez-vous acheté ?", type: "text", placeholder: "Ex : Tissu, farine, essence..." },
+      { field: "categorie", label: "Catégorie", question: "Quelle catégorie ?", type: "select", options: ["Matières premières", "Marchandises à revendre", "Prestataire & main-d'œuvre", "Dépenses diverses"] },
+      { field: "article", label: "Article de stock", question: "Cet achat remplit quel article de stock ?", type: "article", types: ["Matière première", "Marchandise"], blank: "— Pas de stock concerné —",
+        help: "Laissez vide pour un loyer, un transport, un prestataire..." },
+      { field: "quantite", label: "Quantité", question: "Quelle quantité avez-vous reçue ?", type: "number" },
+      { field: "montant", label: "Montant", question: "Combien avez-vous payé (ou devez-vous payer) ?", type: "number" },
+      { field: "fournisseur", label: "Fournisseur", question: "Chez qui ?", type: "text", suggest: "tiers", placeholder: "Ex : Fournisseur Kivu" },
+      { field: "statut", label: "Statut", question: "C'est déjà payé ?", type: "select", options: ["Payé", "À payer"],
+        help: "« À payer » si vous devez encore régler cet achat plus tard. Quand vous le réglerez, notez-le dans « Règlements fournisseurs »." }
+    ]
+  },
+  {
+    id: "tiers", title: "Fournisseurs & prestataires", icon: "👥",
+    intro: "Les personnes à qui vous achetez ou que vous payez pour un travail. Yosef calcule ce que vous leur devez encore.",
+    columns: [
+      { field: "nom", label: "Nom", question: "Quel est son nom ?", type: "text", required: true,
+        help: "Écrivez-le exactement comme dans vos achats, pour que Yosef retrouve ce que vous lui devez." },
+      { field: "type", label: "Type", question: "C'est…", type: "select", options: ["Fournisseur", "Prestataire de services", "Main-d'œuvre"] },
+      { field: "telephone", label: "Téléphone", question: "Téléphone (optionnel)", type: "text" },
+      { field: "note", label: "Note", question: "Une note ? (optionnel)", type: "textarea" }
+    ]
+  },
+  {
+    id: "production", title: "Production", icon: "🛠️",
+    intro: "Quand vous fabriquez un produit, indiquez ce que vous avez utilisé. Le stock de matières diminue, celui du produit augmente, et Yosef en déduit votre coût de revient.",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "produit", label: "Produit", question: "Qu'avez-vous fabriqué ?", type: "article", types: ["Produit fabriqué"], required: true, blank: "— Choisir —",
+        help: "Le produit doit d'abord exister dans « Stock & articles » avec le type « Produit fabriqué »." },
+      { field: "quantite", label: "Quantité", question: "Combien en avez-vous fabriqué ?", type: "number", required: true },
+      { field: "matiere1", label: "Matière 1", question: "Première matière utilisée", type: "article", types: ["Matière première", "Marchandise"], blank: "— Aucune —" },
+      { field: "qte1", label: "Qté 1", question: "Quelle quantité ?", type: "number" },
+      { field: "matiere2", label: "Matière 2", question: "Deuxième matière (optionnel)", type: "article", types: ["Matière première", "Marchandise"], blank: "— Aucune —" },
+      { field: "qte2", label: "Qté 2", question: "Quelle quantité ?", type: "number" },
+      { field: "matiere3", label: "Matière 3", question: "Troisième matière (optionnel)", type: "article", types: ["Matière première", "Marchandise"], blank: "— Aucune —" },
+      { field: "qte3", label: "Qté 3", question: "Quelle quantité ?", type: "number" },
+      { field: "mainOeuvre", label: "Main-d'œuvre", question: "Coût du travail pour ce lot (optionnel)", type: "number",
+        help: "Main-d'œuvre ou prestataire. Sert seulement à calculer le coût de revient ; le paiement réel se note dans « Achats & dépenses »." }
+    ]
+  },
+  {
+    id: "ajustements", title: "Inventaire & pertes", icon: "📋",
+    intro: "Si votre comptage réel diffère du stock affiché, ou si de la marchandise est cassée, perdue ou donnée, corrigez-le ici. Mettez un nombre négatif pour retirer du stock.",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "article", label: "Article", question: "Quel article ?", type: "article", types: STOCKABLE, required: true, blank: "— Choisir —" },
+      { field: "quantite", label: "Quantité", question: "Combien en plus ou en moins ?", type: "number", required: true, allowNegative: true,
+        help: "Ex : -3 si 3 pièces sont cassées ; +2 si vous en retrouvez 2." },
+      { field: "motif", label: "Motif", question: "Pourquoi ?", type: "select", options: ["Inventaire physique", "Perte / casse", "Don / usage personnel", "Autre"] },
+      { field: "note", label: "Note", question: "Une note ? (optionnel)", type: "textarea" }
+    ]
+  },
+  {
+    id: "ventes", title: "Ventes & factures", icon: "🛒",
+    intro: "Chaque vente que vous faites. Si vous choisissez un article, le stock diminue tout seul. Pour un service, choisissez-le sans vous soucier du stock.",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "client", label: "Client", question: "Qui a acheté ?", type: "text", suggest: "clients", placeholder: "Ex : Mme Diallo" },
+      { field: "article", label: "Article", question: "Qu'avez-vous vendu ?", type: "article", types: ["Marchandise", "Produit fabriqué", "Service"], blank: "— Autre / non listé —" },
+      { field: "quantite", label: "Quantité", question: "Quelle quantité ?", type: "number", default: 1 },
+      { field: "montant", label: "Montant", question: "Pour quel montant ?", type: "number" },
+      { field: "produit", label: "Détail", question: "Détail (optionnel)", type: "text" },
+      { field: "statut", label: "Statut", question: "Où en est le paiement ?", type: "select", options: ["Payée", "En attente", "Facturée"],
+        help: "« Payée » = vous avez déjà reçu l'argent. « En attente » ou « Facturée » = le client vous doit encore de l'argent ; quand il paiera, notez-le dans « Règlements clients »." }
+    ]
+  },
+  {
+    id: "encaissements", title: "Règlements clients", icon: "💰",
+    intro: "Quand un client vous paie plus tard une vente qui n'était pas encore payée, notez-le ici. (Une vente déjà « Payée » n'a pas besoin d'être ressaisie.)",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "client", label: "Client", question: "De qui avez-vous reçu de l'argent ?", type: "text", suggest: "clients" },
+      { field: "montant", label: "Montant reçu", question: "Combien avez-vous reçu ?", type: "number" },
+      { field: "mode", label: "Mode", question: "Comment l'avez-vous reçu ?", type: "select", options: MODES },
+      { field: "reference", label: "Référence", question: "Référence (optionnel)", type: "text" }
+    ]
+  },
+  {
+    id: "paiements", title: "Règlements fournisseurs", icon: "📤",
+    intro: "Quand vous payez plus tard un achat marqué « À payer », notez-le ici. (Un achat déjà « Payé » n'a pas besoin d'être ressaisi.)",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "fournisseur", label: "Fournisseur", question: "À qui avez-vous payé ?", type: "text", suggest: "tiers" },
+      { field: "montant", label: "Montant versé", question: "Combien avez-vous versé ?", type: "number" },
+      { field: "mode", label: "Mode", question: "Comment avez-vous payé ?", type: "select", options: MODES },
+      { field: "reference", label: "Référence", question: "Référence (optionnel)", type: "text" }
+    ]
+  },
+  {
+    id: "epargne", title: "Épargne & objectifs", icon: "🌱",
+    intro: "L'argent que vous mettez de côté pour grandir : une machine, un local, un fonds de sécurité...",
+    columns: [
+      { field: "date", label: "Date", question: "Quand ?", type: "date" },
+      { field: "objectif", label: "Objectif", question: "Quel est votre objectif ?", type: "text", placeholder: "Ex : Nouvelle machine à coudre" },
+      { field: "montant", label: "Montant mis de côté", question: "Combien avez-vous mis de côté ?", type: "number" },
+      { field: "objectifTotal", label: "Objectif total", question: "Quel est le montant total visé ?", type: "number",
+        help: "Le montant total que vous voulez atteindre pour cet objectif." },
+      { field: "note", label: "Note", question: "Une note ? (optionnel)", type: "textarea" }
+    ]
+  }
+];
+
+const KPI_HELP = {
+  ventes: "Le total de ce que vous avez vendu ce mois-ci, que ce soit déjà payé ou non.",
+  disponible: "Une estimation de l'argent réellement disponible : votre capital et vos ventes payées, plus les règlements clients reçus, moins vos achats payés et vos règlements fournisseurs. Le stock initial n'est pas compté, ce n'est pas de l'argent.",
+  sorties: "L'argent sorti ce mois-ci : achats payés et règlements fournisseurs.",
+  creances: "L'argent que vos clients vous doivent encore : ventes « En attente » ou « Facturée », moins les règlements déjà reçus.",
+  stock: "La valeur de ce que vous avez en stock : quantité × coût d'une unité.",
+  stockBas: "Les articles dont la quantité est tombée au niveau d'alerte que vous avez fixé, ou en dessous.",
+  dettes: "L'argent que vous devez encore à vos fournisseurs et prestataires : achats « À payer », moins vos règlements déjà faits.",
+  marge: "Ce que vos ventes du mois ont rapporté après déduction du coût des articles vendus. Les services et les ventes sans article ne sont pas comptés."
+};
+
+function loadRegistry(){
+  try{
+    const r = JSON.parse(localStorage.getItem(REG_KEY));
+    if(r && Array.isArray(r.list) && r.list.length){
+      if(!r.list.find(c => c.id === r.active)) r.active = r.list[0].id;
+      return r;
+    }
+  }catch(e){}
+  // Première fois : on crée « Mon entreprise » et on y reprend les anciennes données
+  const id = crypto.randomUUID();
+  const old = localStorage.getItem(STORAGE_KEY);
+  if(old) localStorage.setItem(dataKey(id), old);
+  const r = { active: id, list: [{ id, nom: "Mon entreprise" }] };
+  localStorage.setItem(REG_KEY, JSON.stringify(r));
+  return r;
+}
+let registry = loadRegistry();
+let data = loadData();
+let activeSection = "dashboard";
+let editingRowId = null;
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(dataKey(registry.active));
+    const parsed = raw ? JSON.parse(raw) : {};
+    SECTIONS.forEach(s => { if(!Array.isArray(parsed[s.id])) parsed[s.id] = []; });
+    return parsed;
+  }catch(e){
+    console.error("Erreur de lecture des données locales :", e);
+    const empty = {}; SECTIONS.forEach(s => empty[s.id] = []); return empty;
+  }
+}
+function saveData(){ localStorage.setItem(dataKey(registry.active), JSON.stringify(data)); scheduleFileWrite(); }
+
+// ---------------- UTILITAIRES ----------------
+
+const num = v => parseFloat(v) || 0;
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function sum(sectionId, field, filterFn){
+  return data[sectionId].filter(filterFn || (() => true)).reduce((acc, r) => acc + num(r[field]), 0);
+}
+function isThisMonth(dateStr){
+  if(!dateStr) return false;
+  const d = new Date(dateStr); const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+}
+function formatMontant(n){ return Math.round(n).toLocaleString("fr-FR") + " F"; }
+function fmtQty(n){ return (Math.round(n * 100) / 100).toLocaleString("fr-FR"); }
+function byId(sectionId, id){ return data[sectionId].find(r => r.id === id); }
+function articleName(id){ const a = byId("articles", id); return a ? a.nom : ""; }
+function helpIcon(text){
+  if(!text) return "";
+  return `<span class="help-icon">?<span class="help-tip">${esc(text)}</span></span>`;
+}
+
+// ---------------- STOCK & COÛTS ----------------
+
+function qtyOf(a){
+  if(!a || a.type === "Service") return null;
+  const id = a.id;
+  let q = num(a.quantiteInitiale);
+  data.achats.forEach(r => { if(r.article === id) q += num(r.quantite); });
+  data.ventes.forEach(r => { if(r.article === id) q -= num(r.quantite); });
+  data.production.forEach(r => {
+    if(r.produit === id) q += num(r.quantite);
+    [1, 2, 3].forEach(i => { if(r["matiere" + i] === id) q -= num(r["qte" + i]); });
+  });
+  data.ajustements.forEach(r => { if(r.article === id) q += num(r.quantite); });
+  return q;
+}
+
+function lotCost(p, depth){
+  let c = num(p.mainOeuvre);
+  [1, 2, 3].forEach(i => {
+    const m = byId("articles", p["matiere" + i]);
+    if(m) c += num(p["qte" + i]) * costOf(m, (depth || 0) + 1);
+  });
+  return c;
+}
+
+function costOf(a, depth){
+  if(!a) return 0;
+  depth = depth || 0;
+  if(depth > 3) return num(a.coutUnitaire);
+  if(a.type === "Produit fabriqué"){
+    let totalCost = 0, totalQty = 0;
+    data.production.forEach(p => {
+      if(p.produit === a.id && num(p.quantite) > 0){ totalCost += lotCost(p, depth); totalQty += num(p.quantite); }
+    });
+    if(totalQty > 0) return totalCost / totalQty;
+  }
+  const buys = data.achats
+    .filter(r => r.article === a.id && num(r.quantite) > 0)
+    .sort((x, y) => new Date(y.date || 0) - new Date(x.date || 0));
+  if(buys.length) return num(buys[0].montant) / num(buys[0].quantite);
+  return num(a.coutUnitaire);
+}
+
+function stockables(){ return data.articles.filter(a => STOCKABLE.includes(a.type)); }
+function stockValue(){
+  return stockables().reduce((acc, a) => acc + Math.max(0, qtyOf(a)) * costOf(a), 0);
+}
+function isLow(a){
+  const q = qtyOf(a);
+  return q !== null && (q < 0 || (num(a.seuil) > 0 && q <= num(a.seuil)));
+}
+function lowStockList(){ return stockables().filter(isLow); }
+function negativeSet(){
+  return new Set(stockables().filter(a => qtyOf(a) < 0).map(a => a.id));
+}
+function usageCount(articleId){
+  let n = 0;
+  data.achats.forEach(r => { if(r.article === articleId) n++; });
+  data.ventes.forEach(r => { if(r.article === articleId) n++; });
+  data.ajustements.forEach(r => { if(r.article === articleId) n++; });
+  data.production.forEach(r => {
+    if(r.produit === articleId || r.matiere1 === articleId || r.matiere2 === articleId || r.matiere3 === articleId) n++;
+  });
+  return n;
+}
+
+// ---------------- TRÉSORERIE, CRÉANCES, DETTES ----------------
+
+function cashAvailable(){
+  const capitalCash = sum("capital", "montant", r => r.type !== "Stock initial");
+  const cashIn = sum("ventes", "montant", r => r.statut === "Payée") + sum("encaissements", "montant");
+  const cashOut = sum("achats", "montant", r => r.statut === "Payé") + sum("paiements", "montant");
+  return capitalCash + cashIn - cashOut;
+}
+function creances(){
+  return Math.max(0, sum("ventes", "montant", r => r.statut === "En attente" || r.statut === "Facturée") - sum("encaissements", "montant"));
+}
+function dettes(){
+  return Math.max(0, sum("achats", "montant", r => r.statut === "À payer") - sum("paiements", "montant"));
+}
+function dueFor(name){
+  const n = String(name || "").trim().toLowerCase();
+  const same = r => String(r.fournisseur || "").trim().toLowerCase() === n;
+  const owed = data.achats.filter(r => r.statut === "À payer" && same(r)).reduce((a, r) => a + num(r.montant), 0);
+  const paid = data.paiements.filter(same).reduce((a, r) => a + num(r.montant), 0);
+  return Math.max(0, owed - paid);
+}
+function margeMois(){
+  let marge = 0;
+  data.ventes.filter(r => isThisMonth(r.date)).forEach(r => {
+    const a = byId("articles", r.article);
+    if(a && STOCKABLE.includes(a.type) && num(r.quantite) > 0){
+      marge += num(r.montant) - num(r.quantite) * costOf(a);
+    }
+  });
+  return marge;
+}
+
+// ---------------- ONBOARDING ----------------
+
+function maybeShowOnboarding(){
+  if(!localStorage.getItem(ONBOARD_KEY)) document.getElementById("onboarding").hidden = false;
+}
+document.getElementById("btnStart").addEventListener("click", () => {
+  localStorage.setItem(ONBOARD_KEY, "1");
+  document.getElementById("onboarding").hidden = true;
+  activeSection = "capital";
+  render();
+});
+document.getElementById("btnReplay").addEventListener("click", () => {
+  document.getElementById("onboarding").hidden = false;
+});
+
+// ---------------- TOAST ----------------
+
+function showToast(message){
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.hidden = false;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { toast.hidden = true; }, 2200);
+}
+
+// ---------------- YOSEF (bulle proactive) ----------------
+
+const DISMISSED_KEY = "yosef-dismissed-tips";
+function getDismissed(){
+  try{ return JSON.parse(sessionStorage.getItem(DISMISSED_KEY) || "[]"); }catch(e){ return []; }
+}
+function dismissTip(id){
+  const list = getDismissed(); list.push(id);
+  sessionStorage.setItem(DISMISSED_KEY, JSON.stringify(list));
+}
+
+function computeYosefTips(){
+  const tips = [];
+  if(data.capital.length === 0){
+    tips.push({ id: "no-capital", text: "Commencez par ajouter votre capital de départ dans « ① Démarrer » — c'est le point de départ de tout le reste." });
+  }
+  if(data.articles.length === 0 && (data.achats.length + data.ventes.length) >= 2){
+    tips.push({ id: "no-articles", text: "Créez vos articles dans « Stock & articles » pour que Yosef suive ce qu'il vous reste en stock et ce que chaque produit vous rapporte." });
+  }
+  const low = lowStockList();
+  if(low.length > 0){
+    const names = low.slice(0, 2).map(a => a.nom).join(", ");
+    tips.push({ id: "stock-bas", text: `Il est temps de réapprovisionner : ${names}${low.length > 2 ? " et d'autres" : ""} ${low.length > 1 ? "sont" : "est"} presque épuisé${low.length > 1 ? "s" : ""}.` });
+  }
+  const d = dettes();
+  if(d > 0){
+    tips.push({ id: "dettes", text: `Vous devez encore ${formatMontant(d)} à vos fournisseurs et prestataires. Pensez à les régler avant l'échéance.` });
+  }
+  const ventesMois = sum("ventes", "montant", r => isThisMonth(r.date));
+  const sortiesMois = sum("achats", "montant", r => isThisMonth(r.date) && r.statut === "Payé") + sum("paiements", "montant", r => isThisMonth(r.date));
+  if(sortiesMois > ventesMois && ventesMois > 0){
+    tips.push({ id: "sorties-superieures", text: "Vos sorties dépassent vos ventes ce mois-ci. Ce n'est pas forcément grave, mais gardez un œil sur votre réserve." });
+  }
+  const objectifTotal = sum("epargne", "objectifTotal");
+  if(objectifTotal > 0 && sum("epargne", "montant") >= objectifTotal){
+    tips.push({ id: "objectif-atteint", text: "Bravo, vous avez atteint votre objectif d'épargne ! C'est peut-être le moment d'en fixer un nouveau." });
+  }
+  if(tips.length === 0){
+    tips.push({ id: "tout-va-bien", text: "Tout semble sous contrôle pour l'instant. Continuez à enregistrer vos achats, productions et ventes régulièrement." });
+  }
+  const dismissed = getDismissed();
+  return tips.filter(t => !dismissed.includes(t.id));
+}
+
+function renderYosefBubble(){
+  const bubble = document.getElementById("yosefBubble");
+  const tips = computeYosefTips();
+  if(tips.length === 0){ bubble.hidden = true; return; }
+  const tip = tips[0];
+  bubble.hidden = false;
+  bubble.innerHTML = `
+    <button class="yb-close" data-id="${tip.id}">✕</button>
+    <div class="yb-title">🤝 Yosef</div>
+    <div class="yb-text">${esc(tip.text)}</div>
+  `;
+  bubble.querySelector(".yb-close").addEventListener("click", (e) => {
+    dismissTip(e.target.dataset.id);
+    renderYosefBubble();
+  });
+}
+
+// ---------------- FORMULAIRE MODAL ----------------
+
+function suggestionsFor(kind){
+  if(kind === "tiers") return data.tiers.map(t => t.nom).filter(Boolean);
+  if(kind === "clients"){
+    return [...new Set([...data.ventes, ...data.encaissements].map(r => (r.client || "").trim()).filter(Boolean))];
+  }
+  return [];
+}
+
+function openForm(sectionId, rowId){
+  editingRowId = rowId || null;
+  const section = SECTIONS.find(s => s.id === sectionId);
+  const row = editingRowId ? data[sectionId].find(r => r.id === editingRowId) : {};
+
+  const fieldsHtml = section.columns.map(col => {
+    const raw = row[col.field];
+    const value = raw ?? (col.default !== undefined && !editingRowId ? col.default : "");
+    let inputHtml = "";
+    let extra = "";
+
+    if(col.type === "select"){
+      const opts = col.options.map(o => `<option value="${esc(o)}" ${o === value ? "selected" : ""}>${esc(o)}</option>`).join("");
+      inputHtml = `<select data-field="${col.field}">${opts}</select>`;
+    } else if(col.type === "article"){
+      const list = data.articles.filter(a => col.types.includes(a.type));
+      const opts = [`<option value="">${esc(col.blank || "— Aucun —")}</option>`]
+        .concat(list.map(a => `<option value="${esc(a.id)}" ${a.id === value ? "selected" : ""}>${esc(a.nom)}${a.unite ? " (" + esc(a.unite) + ")" : ""}</option>`)).join("");
+      inputHtml = `<select data-field="${col.field}">${opts}</select>`;
+      if(list.length === 0) extra = `<div class="field-help">Aucun article de ce type pour l'instant. Créez-le d'abord dans « Stock &amp; articles ».</div>`;
+    } else if(col.type === "textarea"){
+      inputHtml = `<textarea data-field="${col.field}" placeholder="${esc(col.placeholder || "")}">${esc(value)}</textarea>`;
+    } else if(col.type === "number"){
+      inputHtml = `<input type="number" data-field="${col.field}" value="${esc(value)}" step="any" ${col.allowNegative ? "" : 'min="0"'} placeholder="0">`;
+    } else if(col.type === "date"){
+      inputHtml = `<input type="date" data-field="${col.field}" value="${esc(value || todayStr())}">`;
+    } else {
+      const listAttr = col.suggest ? `list="dl-${col.suggest}"` : "";
+      inputHtml = `<input type="text" data-field="${col.field}" value="${esc(value)}" placeholder="${esc(col.placeholder || "")}" ${listAttr} autocomplete="off">`;
+      if(col.suggest){
+        extra = `<datalist id="dl-${col.suggest}">${suggestionsFor(col.suggest).map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>`;
+      }
+    }
+    return `
+      <div class="field-group">
+        <label>${esc(col.question || col.label)} ${helpIcon(col.help)}</label>
+        ${inputHtml}${extra}
+      </div>
+    `;
+  }).join("");
+
+  const modalCard = document.getElementById("modalCard");
+  modalCard.innerHTML = `
+    <h2>${section.icon} ${editingRowId ? "Modifier" : "Ajouter"} — ${esc(section.title)}</h2>
+    ${fieldsHtml}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnCancelForm">Annuler</button>
+      <button class="btn btn-primary" id="btnSaveForm">Enregistrer ✓</button>
+    </div>
+  `;
+  document.getElementById("modalOverlay").hidden = false;
+
+  document.getElementById("btnCancelForm").addEventListener("click", closeForm);
+  document.getElementById("btnSaveForm").addEventListener("click", () => saveForm(section));
+
+  // Vente : remplir le montant automatiquement à partir du prix de vente de l'article
+  if(section.id === "ventes"){
+    const artEl = modalCard.querySelector('[data-field="article"]');
+    const qtyEl = modalCard.querySelector('[data-field="quantite"]');
+    const montEl = modalCard.querySelector('[data-field="montant"]');
+    if(editingRowId && num(montEl.value) > 0) montEl.dataset.manual = "1";
+    montEl.addEventListener("input", () => { montEl.dataset.manual = "1"; });
+    const autofill = () => {
+      if(montEl.dataset.manual === "1") return;
+      const a = byId("articles", artEl.value);
+      if(a && num(a.prixVente) > 0) montEl.value = num(a.prixVente) * (num(qtyEl.value) || 1);
+    };
+    artEl.addEventListener("change", autofill);
+    qtyEl.addEventListener("input", autofill);
+  }
+}
+
+function closeForm(){
+  document.getElementById("modalOverlay").hidden = true;
+  editingRowId = null;
+}
+
+function validate(section, values){
+  for(const col of section.columns){
+    const v = values[col.field];
+    if(col.required && String(v ?? "").trim() === "") return `Merci de remplir : « ${col.question || col.label} »`;
+    if(col.type === "number" && v !== "" && !col.allowNegative && num(v) < 0) return `« ${col.question || col.label} » ne peut pas être négatif.`;
+  }
+  if(section.id === "ajustements" && num(values.quantite) === 0) return "La quantité ne peut pas être zéro.";
+  return null;
+}
+
+function saveForm(section){
+  const modalCard = document.getElementById("modalCard");
+  const values = {};
+  section.columns.forEach(col => {
+    const el = modalCard.querySelector(`[data-field="${col.field}"]`);
+    values[col.field] = el ? el.value : "";
+  });
+
+  const error = validate(section, values);
+  if(error){ alert(error); return; }
+
+  const checkStock = ["ventes", "production", "ajustements"].includes(section.id);
+  const before = checkStock ? negativeSet() : null;
+
+  let row, oldCopy = null;
+  if(editingRowId){
+    row = data[section.id].find(r => r.id === editingRowId);
+    oldCopy = { ...row };
+    Object.assign(row, values);
+  } else {
+    row = { id: crypto.randomUUID(), ...values, creeLe: new Date().toISOString() };
+    data[section.id].push(row);
+  }
+
+  if(checkStock){
+    const after = negativeSet();
+    const newly = [...after].filter(id => !before.has(id));
+    if(newly.length){
+      const msg = newly.map(id => `${articleName(id)} (il en resterait ${fmtQty(qtyOf(byId("articles", id)))})`).join(", ");
+      if(!confirm(`Stock insuffisant : ${msg}.\n\nEnregistrer quand même ?`)){
+        if(oldCopy) Object.assign(row, oldCopy);
+        else data[section.id] = data[section.id].filter(r => r.id !== row.id);
+        return;
+      }
+    }
+  }
+
+  if(oldCopy) row.modifieLe = new Date().toISOString();
+  saveData();
+  closeForm();
+  showToast("C'est enregistré ✓");
+  render();
+}
+
+// ---------------- DASHBOARD ----------------
+
+function renderDashboard(){
+  const epargneTotal = sum("epargne", "montant");
+  const objectifTotal = sum("epargne", "objectifTotal");
+  const remplissage = objectifTotal > 0 ? Math.min(100, Math.round((epargneTotal / objectifTotal) * 100)) : 0;
+
+  const ventesMois = sum("ventes", "montant", r => isThisMonth(r.date));
+  const sortiesMois = sum("achats", "montant", r => isThisMonth(r.date) && r.statut === "Payé") + sum("paiements", "montant", r => isThisMonth(r.date));
+  const creancesNb = data.ventes.filter(r => r.statut === "En attente" || r.statut === "Facturée").length;
+  const low = lowStockList();
+  const dettesTotal = dettes();
+  const marge = margeMois();
+
+  const alerts = [];
+  if(low.length) alerts.push(`<b>${low.length} article(s)</b> à réapprovisionner : ${esc(low.slice(0, 3).map(a => a.nom).join(", "))}${low.length > 3 ? "…" : ""}`);
+  if(dettesTotal > 0) alerts.push(`Vous devez encore <b>${formatMontant(dettesTotal)}</b> à vos fournisseurs et prestataires.`);
+
+  const journalDefs = [
+    { section: "ventes", desc: r => `Vente — ${r.client || articleName(r.article) || "Client"}`, sign: 1 },
+    { section: "encaissements", desc: r => `Règlement client — ${r.client || "Client"}`, sign: 1 },
+    { section: "achats", desc: r => `Achat — ${r.description || "Dépense"}`, sign: -1 },
+    { section: "paiements", desc: r => `Règlement fournisseur — ${r.fournisseur || "Fournisseur"}`, sign: -1 },
+    { section: "epargne", desc: r => `Épargne — ${r.objectif || "Objectif"}`, sign: 0 }
+  ];
+  let journal = [];
+  journalDefs.forEach(def => {
+    data[def.section].forEach(r => {
+      if(!r.date) return;
+      journal.push({ date: r.date, desc: def.desc(r), amount: num(r.montant), sign: def.sign });
+    });
+  });
+  journal.sort((a, b) => new Date(b.date) - new Date(a.date));
+  journal = journal.slice(0, 6);
+
+  const objectifsMap = {};
+  data.epargne.forEach(r => {
+    const key = r.objectif || "Sans nom";
+    if(!objectifsMap[key]) objectifsMap[key] = { montant: 0, total: 0 };
+    objectifsMap[key].montant += num(r.montant);
+    objectifsMap[key].total = Math.max(objectifsMap[key].total, num(r.objectifTotal));
+  });
+  const objectifsList = Object.entries(objectifsMap);
+  const color = s => s > 0 ? "var(--vert-oasis)" : (s < 0 ? "var(--alerte)" : "var(--or-joseph)");
+
+  return `
+    <div class="topbar">
+      <div>
+        ${companyTag()}<h1>Tableau de bord</h1>
+        <p>Voici comment se porte votre entreprise, à partir de vos saisies.</p>
+      </div>
+      <div class="today-pill">${new Date().toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-text">
+        <div class="eyebrow">Votre grenier</div>
+        <h2>${objectifTotal > 0 ? `Vous avez atteint ${remplissage}% de votre objectif de croissance.` : "Ajoutez un objectif dans « Épargne & objectifs » pour voir votre grenier se remplir."}</h2>
+        <p>Comme Joseph a mis du grain de côté pendant les années d'abondance, chaque franc que vous épargnez aujourd'hui protège votre entreprise demain.</p>
+        <div class="hero-stat">
+          <div><b>${formatMontant(epargneTotal)}</b><span>Réserve actuelle</span></div>
+          <div><b>${formatMontant(objectifTotal)}</b><span>Objectif de croissance</span></div>
+        </div>
+      </div>
+      <div class="silo-wrap">
+        <svg width="150" height="170" viewBox="0 0 150 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="siloClip"><path d="M30 20 Q75 2 120 20 L120 140 Q120 158 75 158 Q30 158 30 140 Z"/></clipPath>
+            <linearGradient id="grainGrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#8A6A22"/><stop offset="45%" stop-color="#C9962C"/><stop offset="100%" stop-color="#E8C976"/>
+            </linearGradient>
+          </defs>
+          <path d="M30 20 Q75 2 120 20 L120 140 Q120 158 75 158 Q30 158 30 140 Z" fill="rgba(255,255,255,0.05)" stroke="rgba(243,238,224,0.35)" stroke-width="2"/>
+          <g clip-path="url(#siloClip)"><rect x="25" y="${160 - (remplissage * 0.9)}" width="100" height="200" fill="url(#grainGrad)"/></g>
+          <ellipse cx="75" cy="20" rx="45" ry="10" fill="none" stroke="rgba(243,238,224,0.5)" stroke-width="2"/>
+          <rect x="65" y="4" width="20" height="12" rx="3" fill="rgba(243,238,224,0.4)"/>
+        </svg>
+        <div class="silo-caption"><b>${remplissage}%</b> plein</div>
+      </div>
+    </section>
+
+    ${alerts.map(a => `<div class="alert-banner"><span>⏰</span><div>${a}</div></div>`).join("")}
+
+    <section class="kpi-grid">
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Ventes ce mois ${helpIcon(KPI_HELP.ventes)}</span><span class="kpi-icon bg-vert">📈</span></div>
+        <div class="kpi-value">${formatMontant(ventesMois)}</div>
+        <div class="kpi-delta">${data.ventes.length} vente(s) enregistrée(s)</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Argent disponible ${helpIcon(KPI_HELP.disponible)}</span><span class="kpi-icon bg-bleu">💳</span></div>
+        <div class="kpi-value">${formatMontant(cashAvailable())}</div>
+        <div class="kpi-delta">Estimation</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Sorties ce mois ${helpIcon(KPI_HELP.sorties)}</span><span class="kpi-icon bg-alerte">📤</span></div>
+        <div class="kpi-value">${formatMontant(sortiesMois)}</div>
+        <div class="kpi-delta">Achats payés + règlements</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Créances à recevoir ${helpIcon(KPI_HELP.creances)}</span><span class="kpi-icon bg-or">🧾</span></div>
+        <div class="kpi-value">${formatMontant(creances())}</div>
+        <div class="kpi-delta">${creancesNb} vente(s) non réglée(s)</div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Valeur du stock ${helpIcon(KPI_HELP.stock)}</span><span class="kpi-icon bg-bleu">📦</span></div>
+        <div class="kpi-value">${formatMontant(stockValue())}</div>
+        <div class="kpi-delta">${stockables().length} article(s) suivi(s)</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">À réapprovisionner ${helpIcon(KPI_HELP.stockBas)}</span><span class="kpi-icon bg-alerte">⚠️</span></div>
+        <div class="kpi-value" style="color:${low.length ? "var(--alerte)" : "var(--vert-oasis)"}">${low.length}</div>
+        <div class="kpi-delta">${low.length ? "article(s) sous le seuil" : "Tout est en ordre"}</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Dettes à payer ${helpIcon(KPI_HELP.dettes)}</span><span class="kpi-icon bg-or">🤝</span></div>
+        <div class="kpi-value">${formatMontant(dettesTotal)}</div>
+        <div class="kpi-delta">Fournisseurs &amp; prestataires</div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">Marge estimée du mois ${helpIcon(KPI_HELP.marge)}</span><span class="kpi-icon bg-vert">✨</span></div>
+        <div class="kpi-value" style="color:${marge >= 0 ? "var(--vert-oasis)" : "var(--alerte)"}">${formatMontant(marge)}</div>
+        <div class="kpi-delta">Ventes − coût des articles</div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="card">
+        <div class="panel-title"><h3>Argent qui entre et qui sort</h3></div>
+        <canvas id="fluxChart" height="130"></canvas>
+      </div>
+      <div class="card">
+        <div class="panel-title"><h3>Journal — activité récente</h3></div>
+        ${journal.length === 0 ? `<p class="empty-state">Rien à afficher pour l'instant.</p>` : journal.map(j => `
+          <div class="journal-row">
+            <div class="journal-left">
+              <span class="journal-dot" style="background:${color(j.sign)}"></span>
+              <div>${esc(j.desc)}<div class="journal-sub">${new Date(j.date).toLocaleDateString("fr-FR")}</div></div>
+            </div>
+            <div class="journal-amount" style="color:${color(j.sign)}">${j.sign > 0 ? "+ " : (j.sign < 0 ? "− " : "→ ")}${formatMontant(j.amount)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="card">
+        <div class="panel-title"><h3>Stock à surveiller</h3></div>
+        ${low.length === 0
+          ? `<p class="empty-state">${stockables().length === 0 ? "Ajoutez vos articles dans « Stock &amp; articles »." : "Aucun article sous son seuil d'alerte. 👍"}</p>`
+          : low.map(a => `<div class="stock-line"><span>${esc(a.nom)}</span><span>${fmtQty(qtyOf(a))} ${esc(a.unite || "")}</span></div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="panel-title"><h3>Objectifs en cours</h3></div>
+        ${objectifsList.length === 0 ? `<p class="empty-state">Ajoutez un objectif dans « Épargne &amp; objectifs ».</p>` : objectifsList.map(([name, o]) => `
+          <div class="objectif-label">${esc(name)}</div>
+          <div class="objectif-bar"><div class="objectif-fill" style="width:${o.total > 0 ? Math.min(100, Math.round(o.montant / o.total * 100)) : 0}%"></div></div>
+          <div class="objectif-value">${formatMontant(o.montant)} / ${formatMontant(o.total)}</div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function drawChart(){
+  const canvas = document.getElementById("fluxChart");
+  if(!canvas || typeof Chart === "undefined") return;
+  const months = [];
+  const now = new Date();
+  for(let i = 5; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString("fr-FR", { month: "short" }) });
+  }
+  const entrees = months.map(() => 0);
+  const sorties = months.map(() => 0);
+  const addToMonth = (arr, dateStr, montant) => {
+    if(!dateStr) return;
+    const d = new Date(dateStr);
+    const idx = months.findIndex(m => m.key === `${d.getFullYear()}-${d.getMonth()}`);
+    if(idx >= 0) arr[idx] += num(montant);
+  };
+  data.ventes.filter(r => r.statut === "Payée").forEach(r => addToMonth(entrees, r.date, r.montant));
+  data.encaissements.forEach(r => addToMonth(entrees, r.date, r.montant));
+  data.achats.filter(r => r.statut === "Payé").forEach(r => addToMonth(sorties, r.date, r.montant));
+  data.paiements.forEach(r => addToMonth(sorties, r.date, r.montant));
+
+  if(canvas._chart) canvas._chart.destroy();
+  canvas._chart = new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: { labels: months.map(m => m.label), datasets: [
+      { label: "Entrées", data: entrees, borderColor: "#1F9D6B", backgroundColor: "rgba(31,157,107,0.08)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 },
+      { label: "Sorties", data: sorties, borderColor: "#C9962C", backgroundColor: "rgba(201,150,44,0.06)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 }
+    ]},
+    options: { responsive: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, font: { family: "Inter", size: 12 } } } },
+      scales: { x: { grid: { display: false }, ticks: { font: { family: "Inter", size: 11 }, color: "#6B6558" } },
+                y: { grid: { color: "rgba(28,27,24,0.05)" }, ticks: { font: { family: "IBM Plex Mono", size: 10 }, color: "#6B6558" } } } }
+  });
+}
+
+// ---------------- LISTE DE SAISIE (par section) ----------------
+
+function entrySummary(section, row){
+  const art = id => articleName(id);
+  switch(section.id){
+    case "capital":
+      return { main: row.description || row.type || "Sans description", sub: row.type || "" };
+    case "articles": {
+      const q = qtyOf(row);
+      const unit = row.unite || "";
+      const parts = [row.type];
+      if(q !== null) parts.push(`valeur ${formatMontant(Math.max(0, q) * costOf(row))}`);
+      else if(num(row.prixVente) > 0) parts.push(`prix ${formatMontant(num(row.prixVente))}`);
+      return {
+        main: row.nom || "Article", sub: parts.filter(Boolean).join(" · "), noDate: true,
+        right: q === null ? "" : `${fmtQty(q)} ${unit}`.trim(),
+        badge: q === null ? "" : (q < 0 ? "Stock négatif" : (isLow(row) ? "À réapprovisionner" : ""))
+      };
+    }
+    case "tiers": {
+      const due = dueFor(row.nom);
+      return { main: row.nom || "Sans nom", noDate: true,
+        sub: [row.type, row.telephone, due > 0 ? `reste à payer ${formatMontant(due)}` : ""].filter(Boolean).join(" · ") };
+    }
+    case "achats":
+      return { main: row.description || "Achat",
+        sub: [row.categorie, row.fournisseur, row.statut, row.article ? `+${fmtQty(num(row.quantite))} ${art(row.article)}` : ""].filter(Boolean).join(" · ") };
+    case "production": {
+      const q = num(row.quantite);
+      const used = [1, 2, 3].filter(i => row["matiere" + i]).map(i => `${fmtQty(num(row["qte" + i]))} ${art(row["matiere" + i])}`).join(", ");
+      const lot = lotCost(row);
+      return { main: `${fmtQty(q)} × ${art(row.produit) || "produit"}`,
+        sub: [used ? "utilisé : " + used : "", q > 0 && lot > 0 ? `coût de revient ≈ ${formatMontant(lot / q)} / unité` : ""].filter(Boolean).join(" · ") };
+    }
+    case "ajustements": {
+      const q = num(row.quantite);
+      const a = byId("articles", row.article);
+      return { main: art(row.article) || "Article", sub: [row.motif, row.note].filter(Boolean).join(" · "),
+        right: `${q > 0 ? "+" : ""}${fmtQty(q)} ${a ? a.unite || "" : ""}`.trim() };
+    }
+    case "ventes":
+      return { main: row.produit || art(row.article) || "Vente",
+        sub: [row.client, row.article ? `${fmtQty(num(row.quantite))} × ${art(row.article)}` : "", row.statut].filter(Boolean).join(" · ") };
+    case "encaissements":
+      return { main: row.client || "Client", sub: row.mode || "" };
+    case "paiements":
+      return { main: row.fournisseur || "Fournisseur", sub: row.mode || "" };
+    case "epargne":
+      return { main: row.objectif || "Objectif", sub: row.note || "" };
+    default:
+      return { main: "", sub: "" };
+  }
+}
+
+function renderSectionList(section){
+  let rows = [...data[section.id]];
+  if(section.id === "articles" || section.id === "tiers"){
+    rows.sort((a, b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"));
+  } else {
+    rows.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  }
+
+  let headerTotal = "<span></span>";
+  if(section.id === "articles") headerTotal = `<span class="section-total">Valeur du stock : ${formatMontant(stockValue())}</span>`;
+  else if(section.columns.some(c => c.field === "montant")) headerTotal = `<span class="section-total">Total : ${formatMontant(sum(section.id, "montant"))}</span>`;
+
+  const body = rows.map(row => {
+    const s = entrySummary(section, row);
+    const hasMontant = row.montant !== undefined && section.columns.some(c => c.field === "montant");
+    const right = s.right !== undefined ? s.right : (hasMontant ? formatMontant(num(row.montant)) : "");
+    const dateStr = (!s.noDate && row.date) ? new Date(row.date).toLocaleDateString("fr-FR") : "";
+    const subLine = [dateStr, s.sub].filter(Boolean).join(" · ");
+    return `
+      <div class="entry-row" data-id="${esc(row.id)}">
+        <div>
+          <div class="entry-main">${esc(s.main)}${s.badge ? `<span class="entry-badge">${esc(s.badge)}</span>` : ""}</div>
+          <div class="entry-sub">${esc(subLine)}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          ${right ? `<div class="entry-amount">${esc(right)}</div>` : ""}
+          <div class="entry-actions">
+            <button class="icon-btn edit" title="Modifier">✎</button>
+            <button class="icon-btn delete" title="Supprimer">✕</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="topbar"><div>${companyTag()}<h1>${section.icon} ${esc(section.title)}</h1></div></div>
+    <p class="section-intro">${esc(section.intro || "")}</p>
+    <div class="section-header">
+      ${headerTotal}
+      <button class="btn btn-primary" id="btnAddRow">+ Ajouter</button>
+    </div>
+    <div class="card">
+      <div class="entry-list">${body}</div>
+      ${rows.length === 0 ? `<p class="empty-state">Rien pour l'instant. Clique sur « + Ajouter » pour commencer.</p>` : ""}
+    </div>
+  `;
+}
+
+// ---------------- MAIN RENDER ----------------
+
+function render(){
+  document.querySelectorAll(".nav-item[data-section]").forEach(el => {
+    el.classList.toggle("active", el.dataset.section === activeSection);
+  });
+
+  const main = document.getElementById("main");
+
+  if(activeSection === "dashboard"){
+    main.innerHTML = renderDashboard();
+    drawChart();
+    renderYosefBubble();
+    return;
+  }
+
+  if(activeSection === "rapports"){
+    main.innerHTML = renderReports();
+    bindReports();
+    renderYosefBubble();
+    return;
+  }
+
+  const section = SECTIONS.find(s => s.id === activeSection);
+  main.innerHTML = renderSectionList(section);
+  renderYosefBubble();
+
+  document.getElementById("btnAddRow").addEventListener("click", () => openForm(section.id, null));
+
+  main.querySelectorAll(".entry-row").forEach(rowEl => {
+    const id = rowEl.dataset.id;
+    rowEl.querySelector(".edit").addEventListener("click", () => openForm(section.id, id));
+    rowEl.querySelector(".delete").addEventListener("click", () => {
+      let message = "Supprimer cette ligne ? Cette action est définitive.";
+      if(section.id === "articles"){
+        const n = usageCount(id);
+        if(n > 0) message = `Cet article est utilisé dans ${n} enregistrement(s) (achats, ventes, production...). Si vous le supprimez, ces lignes resteront mais ne seront plus rattachées à un article, et le stock ne sera plus suivi.\n\nSupprimer quand même ?`;
+      }
+      if(confirm(message)){
+        data[section.id] = data[section.id].filter(r => r.id !== id);
+        saveData();
+        render();
+      }
+    });
+  });
+}
+
+// ---------------- NAVIGATION ----------------
+
+document.querySelectorAll(".nav-item[data-section]").forEach(el => {
+  el.addEventListener("click", () => { activeSection = el.dataset.section; render(); });
+});
+
+// ---------------- EXPORT / IMPORT ----------------
+
+document.getElementById("btnExport").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `yosef-${slug(activeName())}-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const imported = JSON.parse(evt.target.result);
+      if(typeof imported !== "object" || imported === null || Array.isArray(imported)) throw new Error("Format invalide");
+      if(confirm(`Importer cette sauvegarde dans « ${activeName()} » ? Cela remplacera toutes les données actuelles de cette entreprise.`)){
+        SECTIONS.forEach(s => { if(!Array.isArray(imported[s.id])) imported[s.id] = []; });
+        data = imported; saveData(); render();
+      }
+    }catch(err){
+      alert("Ce fichier ne semble pas être une sauvegarde valide de cet outil.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+// ---------------- FICHIER DE DONNÉES (Chrome / Edge) ----------------
+// Chaque saisie est aussi écrite, en temps réel, dans un fichier .json choisi par l'utilisateur.
+
+const FS_SUPPORTED = "showSaveFilePicker" in window && "indexedDB" in window;
+const JSON_TYPES = [{ description: "Données Yosef", accept: { "application/json": [".json"] } }];
+let fileHandle = null, pendingHandle = null, writeTimer = null;
+
+function idb(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("yosef-fs", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("h");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbSet(v){ try{ const db = await idb(); db.transaction("h", "readwrite").objectStore("h").put(v, "handle-" + registry.active); }catch(e){} }
+async function idbGet(){
+  try{
+    const db = await idb();
+    return await new Promise(res => { const q = db.transaction("h").objectStore("h").get("handle-" + registry.active); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); });
+  }catch(e){ return null; }
+}
+function setFileStatus(msg, warn){
+  const el = document.getElementById("fileStatus");
+  if(el){ el.textContent = msg; el.style.color = warn ? "#F0A79F" : ""; }
+}
+async function writeToFile(){
+  if(!fileHandle) return;
+  try{
+    const w = await fileHandle.createWritable();
+    await w.write(JSON.stringify(data, null, 2));
+    await w.close();
+    setFileStatus(`✓ ${fileHandle.name} à jour (${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})`);
+  }catch(e){
+    setFileStatus("⚠ Fichier inaccessible — reconnectez-le", true);
+  }
+}
+function scheduleFileWrite(){
+  if(!fileHandle) return;
+  clearTimeout(writeTimer);
+  writeTimer = setTimeout(writeToFile, 300);
+}
+function applyLoaded(obj){
+  SECTIONS.forEach(s => { if(!Array.isArray(obj[s.id])) obj[s.id] = []; });
+  data = obj;
+  localStorage.setItem(dataKey(registry.active), JSON.stringify(data));
+  render();
+}
+function isDataObject(o){ return o && typeof o === "object" && !Array.isArray(o); }
+
+async function createDataFile(){
+  try{
+    const h = await window.showSaveFilePicker({ suggestedName: `yosef-${slug(activeName())}.json`, types: JSON_TYPES });
+    fileHandle = h; pendingHandle = null; await idbSet(h);
+    await writeToFile(); updateFileButtons(); showToast("Fichier de données lié ✓");
+  }catch(e){ /* annulé par l'utilisateur */ }
+}
+async function openDataFile(){
+  try{
+    const [h] = await window.showOpenFilePicker({ types: JSON_TYPES });
+    const text = await (await h.getFile()).text();
+    let obj;
+    try{ obj = JSON.parse(text); }catch(e){ alert("Ce fichier n'est pas un fichier de données Yosef valide."); return; }
+    if(!isDataObject(obj)){ alert("Ce fichier n'est pas un fichier de données Yosef valide."); return; }
+    if(!confirm(`Charger les données de « ${h.name} » ? Elles remplaceront celles affichées maintenant.`)) return;
+    fileHandle = h; pendingHandle = null; await idbSet(h);
+    applyLoaded(obj); await writeToFile(); updateFileButtons(); showToast("Fichier de données chargé ✓");
+  }catch(e){ /* annulé */ }
+}
+async function reconnectDataFile(){
+  const h = pendingHandle;
+  if(!h) return;
+  try{
+    if((await h.requestPermission({ mode: "readwrite" })) !== "granted") return;
+    const text = (await (await h.getFile()).text()).trim();
+    if(text){
+      let obj;
+      try{ obj = JSON.parse(text); }catch(e){ alert("Le fichier lié est illisible. Rien n'a été modifié."); return; }
+      if(!isDataObject(obj)){ alert("Le fichier lié n'est pas un fichier de données Yosef. Rien n'a été modifié."); return; }
+      fileHandle = h; pendingHandle = null; applyLoaded(obj);
+    } else {
+      fileHandle = h; pendingHandle = null; await writeToFile();
+    }
+    updateFileButtons(); showToast("Fichier reconnecté ✓");
+  }catch(e){ setFileStatus("⚠ Impossible de reconnecter le fichier", true); }
+}
+function updateFileButtons(){
+  const group = document.getElementById("fileGroup");
+  if(!FS_SUPPORTED){
+    group.innerHTML = '<div class="label">Mes données</div><div class="file-status">Enregistrement dans un fichier : disponible sur Chrome ou Edge. Ici, les données restent dans le navigateur ; pensez à « Exporter ».</div>';
+    return;
+  }
+  const linked = !!fileHandle;
+  document.getElementById("btnCreateFile").hidden = linked;
+  document.getElementById("btnOpenFile").hidden = linked;
+  const rec = document.getElementById("btnReconnect");
+  rec.hidden = linked || !pendingHandle;
+  if(pendingHandle) document.getElementById("reconnectLabel").textContent = `Reconnecter « ${pendingHandle.name} »`;
+  if(linked) setFileStatus(`✓ ${fileHandle.name} lié — chaque saisie y est enregistrée`);
+  else if(pendingHandle) setFileStatus("Un clic pour reprendre l'enregistrement dans votre fichier");
+  else setFileStatus("Aucun fichier lié : données dans le navigateur seulement");
+}
+async function initFileLink(){
+  if(FS_SUPPORTED){
+    pendingHandle = await idbGet();
+    document.getElementById("btnCreateFile").addEventListener("click", createDataFile);
+    document.getElementById("btnOpenFile").addEventListener("click", openDataFile);
+    document.getElementById("btnReconnect").addEventListener("click", reconnectDataFile);
+  }
+  updateFileButtons();
+}
+
+// ---------------- RAPPORTS ----------------
+
+function pad2(n){ return String(n).padStart(2, "0"); }
+function dateStr(d){ return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function todayStr(){ return dateStr(new Date()); }
+function shiftDays(n){ const d = new Date(); d.setDate(d.getDate() + n); return dateStr(d); }
+function fmtDate(s){ const p = String(s || "").split("-"); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ""; }
+let report = { from: todayStr(), to: todayStr() };
+
+function applyPreset(name){
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  if(name === "today") report = { from: todayStr(), to: todayStr() };
+  else if(name === "yesterday") report = { from: shiftDays(-1), to: shiftDays(-1) };
+  else if(name === "week") report = { from: shiftDays(-6), to: todayStr() };
+  else if(name === "month") report = { from: dateStr(new Date(y, m, 1)), to: todayStr() };
+  else if(name === "lastmonth") report = { from: dateStr(new Date(y, m - 1, 1)), to: dateStr(new Date(y, m, 0)) };
+}
+
+function repTable(title, heads, rows, totalLabel, total){
+  if(!rows.length) return "";
+  const th = heads.map(h => `<th${h.num ? ' class="num"' : ""}>${esc(h.t)}</th>`).join("");
+  const body = rows.map(r => `<tr>${r.map((c, i) => `<td${heads[i].num ? ' class="num"' : ""}>${esc(c)}</td>`).join("")}</tr>`).join("");
+  const foot = total === undefined ? "" :
+    `<tfoot><tr><td colspan="${heads.length - 1}">${esc(totalLabel)}</td><td class="num">${esc(formatMontant(total))}</td></tr></tfoot>`;
+  return `<section class="card rep-card"><div class="panel-title"><h3>${esc(title)}</h3></div>
+    <div class="table-card"><table class="rep-table"><thead><tr>${th}</tr></thead><tbody>${body}</tbody>${foot}</table></div></section>`;
+}
+
+function renderReports(){
+  let { from, to } = report;
+  if(!from) from = todayStr();
+  if(!to) to = from;
+  if(from > to) [from, to] = [to, from];
+  report = { from, to };
+
+  const inR = r => r.date && r.date >= from && r.date <= to;
+  const asc = rows => [...rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const ventes = asc(data.ventes.filter(inR)), achats = asc(data.achats.filter(inR)),
+        encs = asc(data.encaissements.filter(inR)), pays = asc(data.paiements.filter(inR)),
+        caps = asc(data.capital.filter(inR)), eps = asc(data.epargne.filter(inR)), prods = asc(data.production.filter(inR));
+  const tot = rows => rows.reduce((a, r) => a + num(r.montant), 0);
+  const money = n => formatMontant(n);
+
+  const capCash = tot(caps.filter(r => r.type !== "Stock initial"));
+  const entrees = tot(ventes.filter(r => r.statut === "Payée")) + tot(encs) + capCash;
+  const sorties = tot(achats.filter(r => r.statut === "Payé")) + tot(pays);
+  const undated = ["ventes", "achats", "encaissements", "paiements", "capital", "epargne", "production"]
+    .reduce((a, id) => a + data[id].filter(r => !r.date).length, 0);
+
+  // Jour par jour
+  const days = {};
+  const day = d => (days[d] = days[d] || { nb: 0, ventes: 0, entrees: 0, sorties: 0 });
+  ventes.forEach(r => { const x = day(r.date); x.nb++; x.ventes += num(r.montant); if(r.statut === "Payée") x.entrees += num(r.montant); });
+  encs.forEach(r => { day(r.date).entrees += num(r.montant); });
+  caps.filter(r => r.type !== "Stock initial").forEach(r => { day(r.date).entrees += num(r.montant); });
+  achats.filter(r => r.statut === "Payé").forEach(r => { day(r.date).sorties += num(r.montant); });
+  pays.forEach(r => { day(r.date).sorties += num(r.montant); });
+  const dayKeys = Object.keys(days).sort();
+
+  // Ventes par article
+  const byArt = {};
+  ventes.forEach(r => {
+    const k = articleName(r.article) || r.produit || "Autre / non listé";
+    const x = byArt[k] = byArt[k] || { qty: 0, montant: 0 };
+    x.qty += num(r.quantite); x.montant += num(r.montant);
+  });
+  const artRows = Object.entries(byArt).sort((a, b) => b[1].montant - a[1].montant)
+    .map(([k, x]) => [k, fmtQty(x.qty), money(x.montant)]);
+
+  const label = from === to ? `Rapport du ${fmtDate(from)}` : `Rapport du ${fmtDate(from)} au ${fmtDate(to)}`;
+  const now = new Date();
+  const edite = `édité le ${fmtDate(todayStr())} à ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  const kpi = (lbl, val, sub, icon, bg) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${lbl}</span><span class="kpi-icon ${bg}">${icon}</span></div><div class="kpi-value">${val}</div><div class="kpi-delta">${sub}</div></div>`;
+  const nb = (rows, w) => `${rows.length} ${w}${rows.length > 1 ? "s" : ""}`;
+
+  const sections = [
+    repTable("Jour par jour", [{ t: "Date" }, { t: "Nb ventes", num: true }, { t: "Ventes", num: true }, { t: "Entrées d'argent", num: true }, { t: "Sorties d'argent", num: true }, { t: "Solde", num: true }],
+      dayKeys.length > 1 ? dayKeys.map(k => [fmtDate(k), String(days[k].nb), money(days[k].ventes), money(days[k].entrees), money(days[k].sorties), money(days[k].entrees - days[k].sorties)]) : []),
+    repTable("Ventes par article", [{ t: "Article" }, { t: "Quantité", num: true }, { t: "Montant", num: true }], artRows),
+    repTable("Ventes", [{ t: "Date" }, { t: "Client" }, { t: "Article" }, { t: "Statut" }, { t: "Montant", num: true }],
+      ventes.map(r => [fmtDate(r.date), r.client || "—", articleName(r.article) ? `${fmtQty(num(r.quantite))} × ${articleName(r.article)}` : (r.produit || "—"), r.statut || "", money(num(r.montant))]),
+      "Total des ventes", tot(ventes)),
+    repTable("Capital & investissements — quand avez-vous investi ?", [{ t: "Date" }, { t: "Description" }, { t: "Type" }, { t: "Montant", num: true }],
+      caps.map(r => [fmtDate(r.date), r.description || "—", r.type || "", money(num(r.montant))]), "Total", tot(caps)),
+    repTable("Règlements fournisseurs — quand avez-vous payé ?", [{ t: "Date" }, { t: "Fournisseur" }, { t: "Mode" }, { t: "Montant", num: true }],
+      pays.map(r => [fmtDate(r.date), r.fournisseur || "—", r.mode || "", money(num(r.montant))]), "Total payé", tot(pays)),
+    repTable("Règlements clients — quand avez-vous été payé ?", [{ t: "Date" }, { t: "Client" }, { t: "Mode" }, { t: "Montant", num: true }],
+      encs.map(r => [fmtDate(r.date), r.client || "—", r.mode || "", money(num(r.montant))]), "Total reçu", tot(encs)),
+    repTable("Achats & dépenses", [{ t: "Date" }, { t: "Description" }, { t: "Fournisseur" }, { t: "Statut" }, { t: "Montant", num: true }],
+      achats.map(r => [fmtDate(r.date), r.description || "—", r.fournisseur || "—", r.statut || "", money(num(r.montant))]), "Total des achats", tot(achats)),
+    repTable("Production", [{ t: "Date" }, { t: "Produit" }, { t: "Matières utilisées" }],
+      prods.map(r => [fmtDate(r.date), `${fmtQty(num(r.quantite))} × ${articleName(r.produit) || "produit"}`,
+        [1, 2, 3].filter(i => r["matiere" + i]).map(i => `${fmtQty(num(r["qte" + i]))} ${articleName(r["matiere" + i])}`).join(", ") || "—"])),
+    repTable("Épargne", [{ t: "Date" }, { t: "Objectif" }, { t: "Montant", num: true }],
+      eps.map(r => [fmtDate(r.date), r.objectif || "—", money(num(r.montant))]), "Total épargné", tot(eps))
+  ].join("");
+  const empty = !(ventes.length + achats.length + encs.length + pays.length + caps.length + eps.length + prods.length);
+
+  const presets = [["today", "Aujourd'hui"], ["yesterday", "Hier"], ["week", "7 derniers jours"], ["month", "Ce mois"], ["lastmonth", "Mois dernier"]]
+    .map(([k, t]) => `<button data-preset="${k}">${t}</button>`).join("");
+
+  return `
+    <div class="topbar">
+      <div>${companyTag()}<h1>📊 Rapports</h1><p>${esc(label)} · ${esc(edite)}</p></div>
+      <div class="no-print"><button class="btn btn-primary" id="btnPrint">🖨 Imprimer / PDF</button></div>
+    </div>
+    <div class="card no-print rep-controls">
+      <div class="rep-presets">${presets}</div>
+      <div class="rep-dates">
+        <label>Du <input type="date" id="repFrom" value="${esc(from)}"></label>
+        <label>Au <input type="date" id="repTo" value="${esc(to)}"></label>
+      </div>
+    </div>
+    <section class="kpi-grid">
+      ${kpi("Ventes", money(tot(ventes)), nb(ventes, "vente"), "📈", "bg-vert")}
+      ${kpi("Entrées d'argent " + helpIcon("Ventes déjà payées + règlements clients reçus + capital apporté en argent (le stock initial n'est pas de l'argent)."), money(entrees), "argent reçu", "💳", "bg-bleu")}
+      ${kpi("Sorties d'argent " + helpIcon("Achats déjà payés + règlements fournisseurs."), money(sorties), "argent dépensé", "📤", "bg-alerte")}
+      ${kpi("Solde de la période", money(entrees - sorties), "entrées − sorties", "⚖️", "bg-or")}
+    </section>
+    <section class="kpi-grid">
+      ${kpi("Capital & investissements", money(tot(caps)), nb(caps, "apport"), "💼", "bg-bleu")}
+      ${kpi("Payé aux fournisseurs", money(tot(pays)), nb(pays, "règlement"), "📤", "bg-alerte")}
+      ${kpi("Reçu des clients", money(tot(encs)), nb(encs, "règlement"), "💰", "bg-vert")}
+      ${kpi("Épargne mise de côté", money(tot(eps)), nb(eps, "versement"), "🌱", "bg-or")}
+    </section>
+    ${undated > 0 ? `<p class="rep-note">${undated} ligne(s) sans date ne sont pas comptées dans ce rapport.</p>` : ""}
+    ${empty ? `<div class="card"><p class="empty-state">Aucune opération sur cette période.</p></div>` : sections}
+  `;
+}
+
+function bindReports(){
+  const main = document.getElementById("main");
+  main.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => { applyPreset(b.dataset.preset); render(); }));
+  const f = document.getElementById("repFrom"), t = document.getElementById("repTo");
+  const onChange = () => { report = { from: f.value || todayStr(), to: t.value || f.value || todayStr() }; render(); };
+  f.addEventListener("change", onChange);
+  t.addEventListener("change", onChange);
+  document.getElementById("btnPrint").addEventListener("click", () => window.print());
+}
+
+// ---------------- ENTREPRISES ----------------
+
+function activeName(){
+  const c = registry.list.find(c => c.id === registry.active);
+  return c ? c.nom : "Mon entreprise";
+}
+function slug(s){
+  return String(s || "entreprise").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "entreprise";
+}
+function companyTag(){ return `<div class="company-tag">🏢 ${esc(activeName())}</div>`; }
+function saveRegistry(){ localStorage.setItem(REG_KEY, JSON.stringify(registry)); }
+function renderCompanyBox(){
+  document.getElementById("companySelect").innerHTML = registry.list
+    .map(c => `<option value="${esc(c.id)}" ${c.id === registry.active ? "selected" : ""}>${esc(c.nom)}</option>`).join("");
+}
+async function flushFileWrite(){
+  if(writeTimer){ clearTimeout(writeTimer); writeTimer = null; await writeToFile(); }
+}
+async function switchCompany(id){
+  if(id === registry.active) return;
+  await flushFileWrite();
+  registry.active = id; saveRegistry();
+  data = loadData();
+  fileHandle = null; pendingHandle = null;
+  sessionStorage.removeItem(DISMISSED_KEY);
+  activeSection = "dashboard";
+  renderCompanyBox();
+  render();
+  if(FS_SUPPORTED) pendingHandle = await idbGet();
+  updateFileButtons();
+  showToast(`Entreprise : ${activeName()}`);
+}
+async function newCompany(){
+  const nom = (prompt("Nom de la nouvelle entreprise :") || "").trim();
+  if(!nom) return;
+  const id = crypto.randomUUID();
+  registry.list.push({ id, nom });
+  const empty = {}; SECTIONS.forEach(s => empty[s.id] = []);
+  localStorage.setItem(dataKey(id), JSON.stringify(empty));
+  saveRegistry();
+  await switchCompany(id);
+}
+function renameCompany(){
+  const nom = (prompt("Nouveau nom de l'entreprise :", activeName()) || "").trim();
+  if(!nom) return;
+  registry.list.find(c => c.id === registry.active).nom = nom;
+  saveRegistry(); renderCompanyBox(); render();
+}
+async function deleteCompany(){
+  if(registry.list.length <= 1){ alert("Il faut garder au moins une entreprise."); return; }
+  const nom = activeName();
+  const typed = prompt(`Supprimer « ${nom} » et toutes ses données de ce navigateur ?\n(Un fichier .json lié, s'il existe, n'est pas supprimé.)\n\nPour confirmer, recopiez exactement son nom :`);
+  if(typed === null) return;
+  if(typed.trim() !== nom){ alert("Le nom ne correspond pas. Rien n'a été supprimé."); return; }
+  const oldId = registry.active;
+  const next = registry.list.find(c => c.id !== oldId).id;
+  registry.list = registry.list.filter(c => c.id !== oldId);
+  localStorage.removeItem(dataKey(oldId));
+  await switchCompany(next);
+}
+document.getElementById("companySelect").addEventListener("change", e => switchCompany(e.target.value));
+document.getElementById("btnNewCompany").addEventListener("click", newCompany);
+document.getElementById("btnRenameCompany").addEventListener("click", renameCompany);
+document.getElementById("btnDeleteCompany").addEventListener("click", deleteCompany);
+
+// ---------------- INIT ----------------
+
+renderCompanyBox();
+maybeShowOnboarding();
+render();
+initFileLink();
+
+</script>
+</body>
+</html>
